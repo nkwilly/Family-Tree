@@ -1,0 +1,247 @@
+package com.gi.ro.controller;
+
+import com.gi.ro.entity.Female;
+import com.gi.ro.entity.Male;
+import com.gi.ro.service.PersonService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
+
+@RestController
+@RequestMapping("/api")
+@RequiredArgsConstructor
+@Tag(name = "Personnes", description = "API pour gérer les personnes (hommes et femmes) de l'arbre généalogique")
+public class PersonController {
+
+    private final PersonService<Male> maleService;
+    private final PersonService<Female> femaleService;
+
+    @Operation(summary = "Récupérer toutes les personnes",
+            description = "Récupère la liste complète des hommes et femmes dans l'arbre généalogique")
+    @ApiResponse(responseCode = "200", description = "Liste des personnes récupérée avec succès")
+    @GetMapping("/persons")
+    public ResponseEntity<List<Object>> getAllPersons() {
+        List<Male> males = maleService.findAll();
+        List<Female> females = femaleService.findAll();
+        List<Object> persons = new java.util.ArrayList<>();
+        persons.addAll(males);
+        persons.addAll(females);
+        return ResponseEntity.ok(persons);
+    }
+
+    @Operation(summary = "Récupérer une personne par ID",
+            description = "Récupère une personne (homme ou femme) par son identifiant unique")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Personne trouvée"),
+            @ApiResponse(responseCode = "404", description = "Personne non trouvée", content = @Content)
+    })
+    @GetMapping("/persons/{id}")
+    public ResponseEntity<Object> getPersonById(
+            @Parameter(description = "Identifiant unique de la personne") @PathVariable UUID id) {
+        Optional<Male> male = maleService.findById(id);
+        if (male.isPresent()) return ResponseEntity.ok(male.get());
+        Optional<Female> female = femaleService.findById(id);
+        if (female.isPresent()) return ResponseEntity.ok(female.get());
+        return ResponseEntity.notFound().build();
+    }
+
+    @Operation(summary = "Créer une nouvelle personne",
+            description = "Crée une nouvelle entrée pour une personne (homme ou femme) dans l'arbre généalogique")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Personne créée avec succès"),
+            @ApiResponse(responseCode = "400", description = "Type de personne non reconnu", content = @Content)
+    })
+    @PostMapping("/persons")
+    public ResponseEntity<Object> createPerson(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Données de la personne à créer")
+            @RequestBody Object person) {
+        if (person instanceof Male) {
+            Male saved = maleService.save((Male) person);
+            return ResponseEntity.ok(saved);
+        } else if (person instanceof Female) {
+            Female saved = femaleService.save((Female) person);
+            return ResponseEntity.ok(saved);
+        }
+        return ResponseEntity.badRequest().body("Unrecognized type");
+    }
+
+    @Operation(summary = "Mettre à jour une personne",
+            description = "Met à jour les données d'une personne existante dans l'arbre généalogique")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Personne mise à jour avec succès"),
+            @ApiResponse(responseCode = "400", description = "Type de personne non reconnu", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Personne non trouvée", content = @Content)
+    })
+    @PutMapping("/persons/{id}")
+    public ResponseEntity<Object> updatePerson(
+            @Parameter(description = "Identifiant unique de la personne") @PathVariable UUID id,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Données mises à jour de la personne")
+            @RequestBody Object person) {
+        if (person instanceof Male) {
+            Male updated = maleService.update(id, (Male) person);
+            return ResponseEntity.ok(updated);
+        } else if (person instanceof Female) {
+            Female updated = femaleService.update(id, (Female) person);
+            return ResponseEntity.ok(updated);
+        }
+        return ResponseEntity.badRequest().body("Unrecognized type");
+    }
+
+    @Operation(summary = "Supprimer une personne",
+            description = "Supprime une personne de l'arbre généalogique par son identifiant unique")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Personne supprimée avec succès"),
+            @ApiResponse(responseCode = "404", description = "Personne non trouvée", content = @Content)
+    })
+    @DeleteMapping("/persons/{id}")
+    public ResponseEntity<Void> deletePerson(
+            @Parameter(description = "Identifiant unique de la personne") @PathVariable UUID id) {
+        Optional<Male> male = maleService.findById(id);
+        if (male.isPresent()) {
+            maleService.deleteById(id);
+            return ResponseEntity.noContent().build();
+        }
+        Optional<Female> female = femaleService.findById(id);
+        if (female.isPresent()) {
+            femaleService.deleteById(id);
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    // Specifics routes for Male
+    @Operation(summary = "Récupérer tous les hommes",
+            description = "Récupère la liste complète des hommes dans l'arbre généalogique")
+    @ApiResponse(responseCode = "200", description = "Liste des hommes récupérée avec succès",
+            content = @Content(array = @ArraySchema(schema = @Schema(implementation = Male.class))))
+    @GetMapping("/males")
+    public ResponseEntity<List<Male>> getAllMales() {
+        return ResponseEntity.ok(maleService.findAll());
+    }
+
+    @Operation(summary = "Récupérer un homme par ID",
+            description = "Récupère un homme par son identifiant unique")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Homme trouvé"),
+            @ApiResponse(responseCode = "404", description = "Homme non trouvé", content = @Content)
+    })
+    @GetMapping("/males/{id}")
+    public ResponseEntity<Male> getMaleById(
+            @Parameter(description = "Identifiant unique de l'homme") @PathVariable UUID id) {
+        return maleService.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @Operation(summary = "Créer un nouvel homme",
+            description = "Crée une nouvelle entrée pour un homme dans l'arbre généalogique")
+    @ApiResponse(responseCode = "200", description = "Homme créé avec succès")
+    @PostMapping("/males")
+    public ResponseEntity<Male> createMale(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Données de l'homme à créer")
+            @RequestBody Male male) {
+        return ResponseEntity.ok(maleService.save(male));
+    }
+
+    @Operation(summary = "Mettre à jour un homme",
+            description = "Met à jour les données d'un homme existant dans l'arbre généalogique")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Homme mis à jour avec succès"),
+            @ApiResponse(responseCode = "404", description = "Homme non trouvé", content = @Content)
+    })
+    @PutMapping("/males/{id}")
+    public ResponseEntity<Male> updateMale(
+            @Parameter(description = "Identifiant unique de l'homme") @PathVariable UUID id,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Données mises à jour de l'homme")
+            @RequestBody Male male) {
+        return ResponseEntity.ok(maleService.update(id, male));
+    }
+
+    @Operation(summary = "Supprimer un homme",
+            description = "Supprime un homme de l'arbre généalogique par son identifiant unique")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Homme supprimé avec succès"),
+            @ApiResponse(responseCode = "404", description = "Homme non trouvé", content = @Content)
+    })
+    @DeleteMapping("/males/{id}")
+    public ResponseEntity<Void> deleteMale(
+            @Parameter(description = "Identifiant unique de l'homme") @PathVariable UUID id) {
+        maleService.deleteById(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    // Specific routes for Female
+    @Operation(summary = "Récupérer toutes les femmes",
+            description = "Récupère la liste complète des femmes dans l'arbre généalogique")
+    @ApiResponse(responseCode = "200", description = "Liste des femmes récupérée avec succès",
+            content = @Content(array = @ArraySchema(schema = @Schema(implementation = Female.class))))
+    @GetMapping("/females")
+    public ResponseEntity<List<Female>> getAllFemales() {
+        return ResponseEntity.ok(femaleService.findAll());
+    }
+
+    @Operation(summary = "Récupérer une femme par ID",
+            description = "Récupère une femme par son identifiant unique")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Femme trouvée"),
+            @ApiResponse(responseCode = "404", description = "Femme non trouvée", content = @Content)
+    })
+    @GetMapping("/females/{id}")
+    public ResponseEntity<Female> getFemaleById(
+            @Parameter(description = "Identifiant unique de la femme") @PathVariable UUID id) {
+        return femaleService.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @Operation(summary = "Créer une nouvelle femme",
+            description = "Crée une nouvelle entrée pour une femme dans l'arbre généalogique")
+    @ApiResponse(responseCode = "200", description = "Femme créée avec succès")
+    @PostMapping("/females")
+    public ResponseEntity<Female> createFemale(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Données de la femme à créer")
+            @RequestBody Female female) {
+        return ResponseEntity.ok(femaleService.save(female));
+    }
+
+    @Operation(summary = "Mettre à jour une femme",
+            description = "Met à jour les données d'une femme existante dans l'arbre généalogique")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Femme mise à jour avec succès"),
+            @ApiResponse(responseCode = "404", description = "Femme non trouvée", content = @Content)
+    })
+    @PutMapping("/females/{id}")
+    public ResponseEntity<Female> updateFemale(
+            @Parameter(description = "Identifiant unique de la femme") @PathVariable UUID id,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Données mises à jour de la femme")
+            @RequestBody Female female) {
+        return ResponseEntity.ok(femaleService.update(id, female));
+    }
+
+    @Operation(summary = "Supprimer une femme",
+            description = "Supprime une femme de l'arbre généalogique par son identifiant unique")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Femme supprimée avec succès"),
+            @ApiResponse(responseCode = "404", description = "Femme non trouvée", content = @Content)
+    })
+    @DeleteMapping("/females/{id}")
+    public ResponseEntity<Void> deleteFemale(
+            @Parameter(description = "Identifiant unique de la femme") @PathVariable UUID id) {
+        femaleService.deleteById(id);
+        return ResponseEntity.noContent().build();
+    }
+}

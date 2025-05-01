@@ -15,6 +15,7 @@ import java.util.UUID;
 @Table(name = "female")
 public class Female extends Person {
     @Id
+    @GeneratedValue
     private UUID id;
 
     @Builder

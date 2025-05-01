@@ -1,5 +1,6 @@
 package com.gi.ro.entity;
 
+import jakarta.persistence.MappedSuperclass;
 import lombok.*;
 import java.util.Date;
 
@@ -7,6 +8,7 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
+@MappedSuperclass
 @EqualsAndHashCode
 public abstract class Person {
     protected String name;
@@ -17,5 +19,5 @@ public abstract class Person {
     protected Date born;
     protected Date death;
     protected String photoUrl;
-    protected String unionId; // UUID as String
+    protected String unionId;
 }

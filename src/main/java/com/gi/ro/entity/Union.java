@@ -14,6 +14,7 @@ import java.util.UUID;
 @Table(name = "unions")
 public class Union {
     @Id
+    @GeneratedValue
     private UUID id;
 
     @OneToOne

@@ -2,8 +2,13 @@ package com.gi.ro.controller;
 
 import com.gi.ro.entity.Female;
 import com.gi.ro.entity.Male;
+import com.gi.ro.service.MapperService;
 import com.gi.ro.service.PersonService;
+import com.gi.ro.service.dto.PersonCreateDTO;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,6 +34,7 @@ public class PersonController {
 
     private final PersonService<Male> maleService;
     private final PersonService<Female> femaleService;
+    private final MapperService mapperService;
 
     @Operation(summary = "Récupérer toutes les personnes",
             description = "Récupère la liste complète des hommes et femmes dans l'arbre généalogique")
@@ -149,12 +155,14 @@ public class PersonController {
 
     @Operation(summary = "Créer un nouvel homme",
             description = "Crée une nouvelle entrée pour un homme dans l'arbre généalogique")
-    @ApiResponse(responseCode = "200", description = "Homme créé avec succès")
+    @ApiResponse(responseCode = "201", description = "Homme créé avec succès")
     @PostMapping("/males")
     public ResponseEntity<Male> createMale(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Données de l'homme à créer")
-            @RequestBody Male male) {
-        return ResponseEntity.ok(maleService.save(male));
+            @Valid @RequestBody PersonCreateDTO personDTO) {
+        Male male = mapperService.toMale(personDTO);
+        Male savedMale = maleService.save(male);
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedMale);
     }
 
     @Operation(summary = "Mettre à jour un homme",
@@ -167,8 +175,15 @@ public class PersonController {
     public ResponseEntity<Male> updateMale(
             @Parameter(description = "Identifiant unique de l'homme") @PathVariable UUID id,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Données mises à jour de l'homme")
-            @RequestBody Male male) {
-        return ResponseEntity.ok(maleService.update(id, male));
+            @Valid @RequestBody PersonCreateDTO personDTO) {
+        Male existingMale = maleService.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Homme non trouvé avec l'id: " + id));
+
+        // Mapper les champs du DTO vers l'entité existante
+        Male updatedMale = mapperService.toMale(personDTO);
+        updatedMale.setId(existingMale.getId()); // Conserver l'ID original
+
+        return ResponseEntity.ok(maleService.save(updatedMale));
     }
 
     @Operation(summary = "Supprimer un homme",
@@ -210,12 +225,14 @@ public class PersonController {
 
     @Operation(summary = "Créer une nouvelle femme",
             description = "Crée une nouvelle entrée pour une femme dans l'arbre généalogique")
-    @ApiResponse(responseCode = "200", description = "Femme créée avec succès")
+    @ApiResponse(responseCode = "201", description = "Femme créée avec succès")
     @PostMapping("/females")
     public ResponseEntity<Female> createFemale(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Données de la femme à créer")
-            @RequestBody Female female) {
-        return ResponseEntity.ok(femaleService.save(female));
+            @Valid @RequestBody PersonCreateDTO personDTO) {
+        Female female = mapperService.toFemale(personDTO);
+        Female savedFemale = femaleService.save(female);
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedFemale);
     }
 
     @Operation(summary = "Mettre à jour une femme",
@@ -228,8 +245,15 @@ public class PersonController {
     public ResponseEntity<Female> updateFemale(
             @Parameter(description = "Identifiant unique de la femme") @PathVariable UUID id,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Données mises à jour de la femme")
-            @RequestBody Female female) {
-        return ResponseEntity.ok(femaleService.update(id, female));
+            @Valid @RequestBody PersonCreateDTO personDTO) {
+        Female existingFemale = femaleService.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Femme non trouvée avec l'id: " + id));
+
+        // Mapper les champs du DTO vers l'entité existante
+        Female updatedFemale = mapperService.toFemale(personDTO);
+        updatedFemale.setId(existingFemale.getId()); // Conserver l'ID original
+
+        return ResponseEntity.ok(femaleService.save(updatedFemale));
     }
 
     @Operation(summary = "Supprimer une femme",

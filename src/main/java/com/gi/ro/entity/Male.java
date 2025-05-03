@@ -17,10 +17,4 @@ public class Male extends Person {
     @Id
     @GeneratedValue
     private UUID id;
-
-    @Builder
-    public Male(UUID id, String name, String email, String phone, String country, String city, Date born, Date death, String photoUrl, String unionId) {
-        super(name, email, phone, country, city, born, death, photoUrl, unionId);
-        this.id = id;
-    }
 }

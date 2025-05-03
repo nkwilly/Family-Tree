@@ -19,7 +19,7 @@ public class Female extends Person {
     private UUID id;
 
     @Builder
-    public Female(UUID id, String name, String email, String phone, String country, String city, Date born, Date death, String photoUrl, String unionId) {
+    public Female(UUID id, String name, String email, String phone, String country, String city, Date born, Date death, String photoUrl, UUID unionId) {
         super(name, email, phone, country, city, born, death, photoUrl, unionId);
         this.id = id;
     }

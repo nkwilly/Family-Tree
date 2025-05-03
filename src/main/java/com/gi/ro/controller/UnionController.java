@@ -2,6 +2,9 @@ package com.gi.ro.controller;
 
 import com.gi.ro.entity.Union;
 import com.gi.ro.service.UnionService;
+import com.gi.ro.service.dto.UnionCreateDTO;
+import com.gi.ro.service.dto.UnionDTO;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -53,12 +56,12 @@ public class UnionController {
 
     @Operation(summary = "Créer une nouvelle union",
             description = "Enregistre une nouvelle union entre deux personnes dans l'arbre généalogique")
-    @ApiResponse(responseCode = "200", description = "Union créée avec succès")
+    @ApiResponse(responseCode = "201", description = "Union créée avec succès")
     @PostMapping
     public ResponseEntity<Union> createUnion(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "Données de l'union à créer, incluant les références aux personnes concernées")
-            @RequestBody Union union) {
+            @Valid @RequestBody UnionCreateDTO union) {
         Union saved = unionService.save(union);
         return ResponseEntity.ok(saved);
     }
@@ -74,8 +77,8 @@ public class UnionController {
             @Parameter(description = "Identifiant unique de l'union") @PathVariable UUID id,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "Données mises à jour de l'union")
-            @RequestBody Union union) {
-        Union updated = unionService.update(id, union);
+            @RequestBody @Valid UnionDTO union) {
+        Union updated = unionService.update(union);
         return ResponseEntity.ok(updated);
     }
 

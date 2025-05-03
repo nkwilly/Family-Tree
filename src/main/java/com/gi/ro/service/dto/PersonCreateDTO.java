@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.Date;
+import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -24,5 +25,5 @@ public class PersonCreateDTO {
     private Date born;
     private Date death;
     private String photoUrl;
-    private String unionId;
+    private UUID unionId;
 }

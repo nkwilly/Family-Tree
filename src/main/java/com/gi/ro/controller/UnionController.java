@@ -74,7 +74,6 @@ public class UnionController {
     })
     @PutMapping("/{id}")
     public ResponseEntity<Union> updateUnion(
-            @Parameter(description = "Identifiant unique de l'union") @PathVariable UUID id,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "Données mises à jour de l'union")
             @RequestBody @Valid UnionDTO union) {
